@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Best Practices — Arquitetura & Engenharia em Ambientes Multi-Repositório</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<style>
+  :root{
+    /* ---- Palette (max 4) ------------------------------------ */
+    --branco:  #FFFFFF;
+    --preto:   #0E0F12;
+    --azul:    #1B3FB0;
+    --laranja: #F26430;
+
+    /* derived neutrals (still inside the 4-color spirit) */
+    --bg:       var(--branco);
+    --bg-dark:  var(--preto);
+    --fg:       var(--preto);
+    --fg-soft:  #2B2D33;
+    --fg-mute:  #6A6D76;
+    --fg-faint: #A0A2AA;
+    --rule:     rgba(14,15,18,.12);
+    --rule-soft:rgba(14,15,18,.06);
+    --tint:     #F4F5F8;          /* very light blue-grey card bg */
+
+    /* Type scale @1920x1080 */
+    --type-display: 132px;
+    --type-section: 200px;
+    --type-title:   64px;
+    --type-subtitle:44px;
+    --type-lead:    36px;
+    --type-body:    28px;
+    --type-small:   24px;
+    --type-eyebrow: 24px;
+    --type-stat:    160px;
+
+    /* Spacing */
+    --pad-top:    96px;
+    --pad-bottom: 88px;
+    --pad-x:      120px;
+    --gap-title:  52px;
+
+    --serif: "Source Serif 4", "Source Serif Pro", Georgia, serif;
+    --sans:  "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+
+  html, body { margin:0; padding:0; background:#000; color:var(--fg); font-family:var(--sans); }
+  deck-stage { background:#000; }
+
+  /* ---------- Slide base ---------- */
+  .slide{
+    background: var(--bg);
+    color: var(--fg);
+    width:100%; height:100%;
+    box-sizing:border-box;
+    position:relative;
+    overflow:hidden;
+    font-family:var(--sans);
+    font-size: var(--type-body);
+    line-height:1.35;
+    letter-spacing:-0.005em;
+    padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  }
+  .slide.dark{ background: var(--preto); color: #F2F2F2; }
+  .slide.dark .topbar{ color:#8A8D96; }
+  .slide.dark .footbar{ color:#5E6168; }
+  .slide.dark .eyebrow{ color:#A0A2AA; }
+  .slide.dark .muted{ color:#A0A2AA; }
+  .slide.dark hr.rule{ background: rgba(255,255,255,.14); }
+
+  /* ---------- Top/foot strips ---------- */
+  .topbar{
+    position:absolute;
+    top: 56px; left: var(--pad-x); right: var(--pad-x);
+    display:flex; align-items:center; justify-content:space-between;
+    font-size: 24px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--fg-mute);
+    font-weight:500;
+  }
+  .topbar .b{ display:inline-block; background: var(--azul); color: var(--branco); padding: 2px 10px; margin-right: 10px; letter-spacing: 0.14em; }
+  .footbar{
+    position:absolute;
+    bottom: 44px; left: var(--pad-x); right: var(--pad-x);
+    display:flex; align-items:center; justify-content:space-between;
+    font-size: 24px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color: var(--fg-faint);
+    font-weight:500;
+  }
+
+  /* ---------- Common type ---------- */
+  .eyebrow{
+    font-size: var(--type-eyebrow);
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color: var(--fg-mute);
+    font-weight:500;
+    margin-bottom: 36px;
+  }
+  .eyebrow .accent{ color: var(--laranja); }
+  .title{
+    font-family: var(--sans);
+    font-size: var(--type-title);
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing:-0.02em;
+    color: var(--fg);
+    margin: 0 0 var(--gap-title) 0;
+    text-wrap: balance;
+  }
+  .title em{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--azul);
+  }
+  .title .orange{ color: var(--laranja); font-style: italic; font-family: var(--serif); font-weight:400; }
+  .subtitle{
+    font-size: var(--type-subtitle);
+    font-weight:400;
+    line-height:1.18;
+    letter-spacing:-0.012em;
+    color: var(--fg-soft);
+  }
+  .lead{
+    font-family: var(--serif);
+    font-size: var(--type-lead);
+    line-height:1.22;
+    color: var(--fg);
+    font-weight: 400;
+    letter-spacing:-0.008em;
+  }
+  .body{ font-size: var(--type-body); color: var(--fg-soft); line-height: 1.42; }
+  .small{ font-size: var(--type-small); color: var(--fg-mute); }
+  .muted{ color: var(--fg-mute); }
+  .mono{ font-family: var(--mono); }
+  .serif{ font-family: var(--serif); }
+  .azul{ color: var(--azul); }
+  .laranja{ color: var(--laranja); }
+
+  /* ============================================================
+     01 — COVER
+  ============================================================ */
+  .cover{
+    display:grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .cover .crest{
+    display:flex; align-items:center; gap:18px;
+    font-size: 24px; letter-spacing:0.22em; text-transform:uppercase;
+    color: var(--fg-mute); font-weight:500;
+  }
+  .cover .crest .mark{
+    width:54px; height:54px;
+    background: var(--azul);
+    color: var(--branco);
+    display:grid; place-items:center;
+    font-family: var(--serif);
+    font-size:26px; font-style:italic;
+  }
+  .cover .lockup{ align-self: end; }
+  .cover .kicker{
+    font-size: 26px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--azul);
+    font-weight: 500;
+    margin-bottom: 32px;
+  }
+  .cover .kicker .pipe{ color: var(--laranja); margin: 0 14px; }
+  .cover h1{
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: var(--type-display);
+    line-height: 0.96;
+    letter-spacing: -0.028em;
+    margin: 0;
+    max-width: 1600px;
+    text-wrap: balance;
+  }
+  .cover h1 em{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--azul);
+  }
+  .cover .deck-sub{
+    font-family: var(--serif);
+    font-size: 40px;
+    color: var(--fg-soft);
+    margin-top: 36px;
+    max-width: 1300px;
+    line-height: 1.22;
+    font-style: italic;
+    font-weight: 300;
+  }
+  .cover .meta{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 60px;
+    border-top:2px solid var(--preto);
+    padding-top: 28px;
+  }
+  .cover .meta div{ font-size: 24px; letter-spacing:0.16em; text-transform:uppercase; color: var(--fg-mute); }
+  .cover .meta strong{ display:block; color: var(--fg); font-weight:500; margin-top:10px; letter-spacing:0.06em; font-size: 26px; }
+
+  /* ============================================================
+     02 — AGENDA
+  ============================================================ */
+  .agenda-list{ margin-top: 12px; }
+  .agenda-row{
+    display:grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: baseline;
+    padding: 36px 0;
+    border-top:1px solid var(--rule);
+    font-size: 56px;
+    color:var(--fg);
+    letter-spacing: -0.015em;
+  }
+  .agenda-row:last-child{ border-bottom:1px solid var(--rule); }
+  .agenda-row .n{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-size: 56px;
+    font-variant-numeric: tabular-nums;
+    font-style: italic;
+    font-weight:400;
+  }
+  .agenda-row .label{ font-weight: 400; }
+  .agenda-row .label em{ font-family: var(--serif); font-style: italic; color: var(--fg-mute); font-weight: 400; font-size: 36px; margin-left: 16px; }
+  .agenda-row .pages{ font-size:24px; color:var(--fg-mute); letter-spacing:0.14em; text-transform:uppercase; }
+
+  /* ============================================================
+     03 — CONTEXTO
+  ============================================================ */
+  .ctx{
+    display:grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 96px;
+    margin-top: 12px;
+    align-items: start;
+  }
+  .ctx .lead{ max-width: 740px; }
+  .stat-stack{ display:flex; flex-direction:column; gap: 40px; }
+  .stat-block{
+    border-top: 2px solid var(--preto);
+    padding-top: 28px;
+  }
+  .stat-block .num{
+    font-family: var(--serif);
+    font-size: 120px;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--preto);
+    font-weight: 300;
+  }
+  .stat-block .num .unit{ font-size: 48px; color: var(--azul); margin-left: 4px; }
+  .stat-block .label{ font-size: 26px; color: var(--fg-soft); line-height: 1.34; margin-top: 16px; max-width: 640px; }
+
+  /* ============================================================
+     04 — SINTOMAS
+  ============================================================ */
+  .sym-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 96px;
+    row-gap: 0;
+    margin-top: 12px;
+  }
+  .sym{
+    display:grid;
+    grid-template-columns: 72px 1fr;
+    gap: 24px;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .sym:nth-child(7), .sym:nth-child(8){ border-bottom: 1px solid var(--rule); }
+  .sym .n{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-size: 32px;
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+  }
+  .sym .lbl{
+    font-size: 28px; color: var(--fg); font-weight: 500;
+    letter-spacing:-0.005em;
+  }
+  .sym .desc{ font-size: 24px; color: var(--fg-mute); margin-top: 6px; line-height: 1.36; }
+
+  /* ============================================================
+     05 — PRINCÍPIOS (dark)
+  ============================================================ */
+  .princ{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 96px;
+    row-gap: 0;
+    margin-top: 12px;
+  }
+  .pr{
+    padding: 28px 0;
+    border-top: 1px solid rgba(255,255,255,.14);
+    display:grid;
+    grid-template-columns: 88px 1fr;
+    gap: 28px;
+    align-items: baseline;
+  }
+  .pr:nth-child(5), .pr:nth-child(6){ border-bottom: 1px solid rgba(255,255,255,.14); }
+  .pr .n{
+    font-family: var(--serif);
+    color: var(--laranja);
+    font-size: 36px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+  }
+  .pr h4{
+    font-family: var(--sans);
+    font-size: 32px;
+    margin: 0;
+    color: var(--branco);
+    font-weight: 500;
+    letter-spacing:-0.005em;
+    line-height: 1.18;
+  }
+  .pr p{
+    font-size: 24px;
+    color: #B7B9C2;
+    line-height: 1.4;
+    margin: 10px 0 0 0;
+  }
+
+  /* ============================================================
+     06 — SUBMÓDULOS (comparison)
+  ============================================================ */
+  table.cmp{
+    width:100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 24px;
+  }
+  table.cmp th, table.cmp td{
+    text-align:left;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    color: var(--fg);
+  }
+  table.cmp thead th{
+    font-size: 24px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    font-weight: 500;
+    border-bottom: 2px solid var(--preto);
+    padding-bottom: 18px;
+  }
+  table.cmp thead th.adopted{ color: var(--azul); }
+  table.cmp thead th.adopted .tag{ display:inline-block; background: var(--azul); color: var(--branco); padding: 2px 10px; margin-left: 10px; letter-spacing: 0.14em; font-size: 24px; }
+  table.cmp tbody tr.highlight td{ background: var(--tint); }
+  table.cmp td.crit{ font-weight:500; width: 300px; }
+  table.cmp td .yn{
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--azul);
+    font-weight:400;
+  }
+  table.cmp td .no{
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--laranja);
+    font-weight:400;
+  }
+
+  /* ============================================================
+     07 — ADRs
+  ============================================================ */
+  .adr{
+    display:grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 80px;
+    margin-top: 12px;
+  }
+  .adr-card{
+    background: var(--preto);
+    color: #D6D7DC;
+    border: 1px solid var(--preto);
+    padding: 28px 32px;
+    font-family: var(--mono);
+    font-size: 24px;
+    line-height: 1.34;
+    border-radius: 2px;
+    white-space: pre-wrap;
+  }
+  .adr-card .h{ color: var(--laranja); font-weight:500; display:block; }
+  .adr-card .meta-line{ color: #8A8D96; }
+  .adr-card .blue{ color: #8FA9FF; }
+  .adr-card hr{ border: 0; border-top: 1px solid rgba(255,255,255,.14); margin: 14px 0; }
+
+  .adr-side h4{ font-size: 32px; font-weight: 500; margin: 0 0 24px 0; letter-spacing:-0.01em; }
+  .adr-side .row{
+    display:grid;
+    grid-template-columns: 48px 1fr;
+    gap: 24px;
+    padding: 18px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 24px;
+    color: var(--fg-soft);
+    line-height: 1.36;
+  }
+  .adr-side .row .n{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    font-size: 26px;
+  }
+  .adr-side .row:last-child{ border-bottom: 1px solid var(--rule); }
+  .adr-side .row em{ font-family: var(--serif); font-style: italic; color: var(--fg); font-weight: 400; }
+
+  /* ============================================================
+     08 — DOC VIVA (loop)
+  ============================================================ */
+  .loop{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 32px;
+    border: 1px solid var(--preto);
+  }
+  .loop .lstep{
+    padding: 36px 32px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+    background: var(--branco);
+  }
+  .loop .lstep:nth-child(2){ background: var(--tint); }
+  .loop .lstep:nth-child(4){ background: var(--tint); }
+  .loop .lstep:last-child{ border-right: 0; }
+  .loop .lstep .ln{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-style: italic;
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 18px;
+  }
+  .loop .lstep h5{
+    font-size: 30px;
+    font-weight: 500;
+    margin: 0 0 14px 0;
+    letter-spacing:-0.01em;
+  }
+  .loop .lstep p{ font-size: 24px; line-height: 1.36; color: var(--fg-soft); margin: 0; }
+  .loop .lstep .arrow{
+    position:absolute;
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--laranja);
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    color: var(--branco);
+    font-family: var(--sans);
+    font-size: 24px;
+    font-weight: 600;
+    z-index: 2;
+  }
+  .loop .lstep:last-child .arrow{ display:none; }
+
+  /* ============================================================
+     09 — GOVERNANCE
+  ============================================================ */
+  .gov{
+    display:grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 80px;
+    margin-top: 12px;
+    align-items: start;
+  }
+  pre.code{
+    margin: 0;
+    padding: 28px 32px;
+    background: var(--preto);
+    color: #D6D7DC;
+    font-family: var(--mono);
+    font-size: 24px;
+    line-height: 1.32;
+    border-radius: 2px;
+    white-space: pre;
+    overflow: hidden;
+  }
+  pre.code .kw{ color: #F26430; }
+  pre.code .str{ color: #B7C7FF; }
+  pre.code .com{ color: #7A7D86; }
+  pre.code .pr{ color: #8FA9FF; }
+
+  .gov-list .g {
+    display:grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    padding: 16px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 24px;
+    color: var(--fg);
+    line-height: 1.32;
+    align-items:baseline;
+  }
+  .gov-list .g:last-child{ border-bottom: 1px solid var(--rule); }
+  .gov-list .g .n{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    font-size: 24px;
+  }
+  .gov-list .g strong{ font-weight: 500; }
+
+  /* ============================================================
+     10 — ÍNDICE DE CONTEXTO (layers)
+  ============================================================ */
+  .layers{ margin-top: 12px; display: flex; flex-direction: column; border: 1px solid var(--preto); }
+  .layer{
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 100px 360px 1fr;
+    gap: 32px;
+    align-items: center;
+    background: var(--branco);
+  }
+  .layer:last-child{ border-bottom: 0; }
+  .layer.top{ background: var(--azul); color: var(--branco); }
+  .layer.top .ln{ color: var(--laranja); }
+  .layer.top .ldesc{ color: #DCE2F4; }
+  .layer .ln{
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 42px;
+    color: var(--azul);
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+  }
+  .layer .lname{
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing:-0.005em;
+  }
+  .layer .ldesc{ font-size: 24px; color: var(--fg-soft); line-height: 1.36; }
+
+  /* ============================================================
+     11 — AGENTES
+  ============================================================ */
+  .agent-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 96px;
+    margin-top: 12px;
+  }
+  .agent{
+    display:grid;
+    grid-template-columns: 64px 1fr;
+    column-gap: 24px;
+    padding: 20px 0;
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .agent:nth-child(7), .agent:nth-child(8){ border-bottom: 1px solid var(--rule); }
+  .agent .an{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-style: italic;
+    font-size: 28px;
+    font-variant-numeric: tabular-nums;
+  }
+  .agent .agname{ font-family: var(--mono); font-size: 26px; color: var(--laranja); font-weight: 500; }
+  .agent .agdesc{ font-size: 24px; color: var(--fg-soft); line-height: 1.36; margin-top: 6px; }
+
+  /* ============================================================
+     12 — SÍNTESE (dark, tree + composition)
+  ============================================================ */
+  .synthesis{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    margin-top: 12px;
+    align-items: start;
+  }
+  pre.tree{
+    font-family: var(--mono);
+    font-size: 26px;
+    line-height: 1.55;
+    color: #E5E6EC;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 36px 40px;
+    margin: 0;
+    border-radius: 2px;
+    white-space: pre;
+  }
+  pre.tree .c{ color: #7A7D86; }
+  pre.tree .k{ color: #8FA9FF; font-weight:500; }
+  pre.tree .a{ color: var(--laranja); }
+
+  .synth-side h4{
+    font-size: 30px; font-weight: 500;
+    margin: 0 0 24px 0; color: var(--branco);
+    letter-spacing:-0.005em;
+  }
+  .synth-side .item{
+    padding: 18px 0;
+    border-top: 1px solid rgba(255,255,255,.14);
+    font-size: 24px;
+    color: #B7B9C2;
+    line-height: 1.36;
+  }
+  .synth-side .item:last-child{ border-bottom: 1px solid rgba(255,255,255,.14); }
+  .synth-side .item .k{ font-family: var(--mono); color: var(--laranja); font-weight: 500; margin-right: 12px; }
+
+  /* ============================================================
+     13 — MÉTRICAS
+  ============================================================ */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--preto);
+    border: 1px solid var(--preto);
+    margin-top: 12px;
+  }
+  .kpi{
+    background: var(--branco);
+    padding: 36px 40px 32px;
+    min-height: 230px;
+    display:flex; flex-direction: column; justify-content:space-between;
+  }
+  .kpi.alt{ background: var(--tint); }
+  .kpi .ktag{
+    font-size: 24px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color: var(--azul);
+    font-weight:500;
+  }
+  .kpi .kval{
+    font-family: var(--serif);
+    font-size: 96px;
+    line-height: 1;
+    letter-spacing:-0.03em;
+    color: var(--preto);
+    font-weight:300;
+    margin-top: 16px;
+  }
+  .kpi .kval .unit{ font-size: 38px; color: var(--laranja); margin-left: 6px; }
+  .kpi .klab{ font-size: 24px; color: var(--fg-soft); line-height: 1.36; margin-top: 14px; }
+
+  /* ============================================================
+     14 — ADOÇÃO
+  ============================================================ */
+  .road{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 32px;
+    position: relative;
+  }
+  .road::before{
+    content:"";
+    position:absolute;
+    top: 30px; left: 0; right: 0;
+    height: 2px;
+    background: var(--preto);
+  }
+  .phase{ padding: 0 36px 0 0; position: relative; }
+  .phase .dot{
+    width: 22px; height: 22px;
+    background: var(--laranja);
+    border-radius: 50%;
+    margin-bottom: 36px;
+    margin-top: 20px;
+    position:relative; z-index: 2;
+  }
+  .phase .ph-name{
+    font-size: 24px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--azul);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .phase h4{
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0 0 16px 0;
+    letter-spacing:-0.01em;
+    line-height:1.16;
+  }
+  .phase p{ font-size: 24px; color: var(--fg-soft); line-height: 1.36; margin: 0 0 18px 0; }
+  .phase ul{ list-style:none; padding:0; margin:0; }
+  .phase li{
+    font-size: 24px;
+    color: var(--fg);
+    padding: 8px 0;
+    border-top: 1px solid var(--rule-soft);
+    line-height: 1.3;
+  }
+  .phase li:first-child{ border-top: 0; }
+  .phase .dur{ font-family: var(--mono); font-size: 24px; color: var(--laranja); margin-top: 16px; }
+
+  /* ============================================================
+     15 — ENCERRAMENTO (dark)
+  ============================================================ */
+  .close{
+    display:grid;
+    grid-template-rows: 1fr auto;
+    padding-bottom: 160px;
+  }
+  .close .big{
+    align-self: center;
+  }
+  .close .big .pre{
+    font-size: 28px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--laranja);
+    font-weight: 500;
+    margin-bottom: 32px;
+  }
+  .close .big h2{
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 140px;
+    line-height: 0.96;
+    letter-spacing: -0.03em;
+    margin: 0;
+    color: var(--branco);
+    max-width: 1500px;
+  }
+  .close .big h2 em{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: #8FA9FF;
+  }
+  .close .big .ask{
+    font-family: var(--serif);
+    font-size: 36px;
+    color: #B7B9C2;
+    margin-top: 32px;
+    max-width: 1300px;
+    line-height: 1.22;
+    font-style: italic;
+    font-weight: 300;
+  }
+  .close .stripe{
+    margin-top: 64px;
+    border-top: 2px solid rgba(255,255,255,.16);
+    padding-top: 28px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 60px;
+    max-width: 1300px;
+  }
+  .close .stripe div{ font-size: 24px; letter-spacing:0.18em; text-transform:uppercase; color: #8A8D96; }
+  .close .stripe strong{ display:block; color: var(--branco); margin-top: 8px; font-size: 26px; letter-spacing: 0.08em; font-weight:500; }
+
+  /* ============================================================
+     CENTRAL DIAGRAM (slide 04)
+  ============================================================ */
+  .central{
+    display:grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 80px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  .central svg{ width:100%; height: 580px; }
+  .central .right .lead{ max-width: 660px; }
+  .central .right ul{ list-style:none; padding:0; margin: 32px 0 0 0; }
+  .central .right li{
+    padding: 18px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 26px;
+    color: var(--fg);
+    line-height: 1.36;
+    display:grid;
+    grid-template-columns: 40px 1fr;
+    gap: 20px;
+    align-items: baseline;
+  }
+  .central .right li:last-child{ border-bottom: 1px solid var(--rule); }
+  .central .right li .arr{ color: var(--laranja); font-family: var(--serif); font-style: italic; font-size: 28px; }
+
+  /* ============================================================
+     TERMINAL / COMMAND BLOCK (slides 08, 09)
+  ============================================================ */
+  .term-wrap{
+    display:grid;
+    grid-template-columns: 1fr 0.95fr;
+    gap: 64px;
+    margin-top: 12px;
+    align-items: start;
+  }
+  pre.term{
+    margin: 0;
+    padding: 28px 32px;
+    background: var(--preto);
+    color: #E5E6EC;
+    font-family: var(--mono);
+    font-size: 24px;
+    line-height: 1.42;
+    border-radius: 2px;
+    white-space: pre-wrap;
+    overflow: hidden;
+    border: 1px solid var(--preto);
+    min-width: 0;
+    word-break: break-word;
+  }
+  pre.term .prompt{ color: var(--laranja); }
+  pre.term .cmd{ color: #E5E6EC; }
+  pre.term .arg{ color: #B7C7FF; }
+  pre.term .com{ color: #7A7D86; }
+  pre.term .out{ color: #A0A2AA; }
+  pre.term .ok{ color: #92D192; }
+  pre.term .head{
+    display:block;
+    color: #7A7D86;
+    font-size: 22px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+  }
+  /* head text bumped to 24px to satisfy min */
+  pre.term .head{ font-size: 24px; }
+
+  .term-side h4{
+    font-size: 32px; font-weight: 500;
+    margin: 0 0 24px 0; letter-spacing:-0.01em;
+  }
+  .term-side .row{
+    display:grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    padding: 16px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 24px;
+    color: var(--fg-soft);
+    line-height: 1.36;
+  }
+  .term-side .row:last-child{ border-bottom: 1px solid var(--rule); }
+  .term-side .row .n{
+    font-family: var(--serif);
+    color: var(--azul);
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+    font-size: 26px;
+  }
+  .term-side .row em{ font-family: var(--serif); font-style: italic; color: var(--fg); font-weight: 400; }
+  .term-side .row code{ font-family: var(--mono); font-size: 24px; background: var(--tint); padding: 2px 8px; color: var(--azul); }
+
+  /* ============================================================
+     PITFALLS GRID (slide 12)
+  ============================================================ */
+  .pit-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 96px;
+    margin-top: 12px;
+  }
+  .pit{
+    padding: 18px 0;
+    border-top: 1px solid var(--rule);
+    display:grid;
+    grid-template-columns: 56px 1fr;
+    gap: 20px;
+    align-items: baseline;
+  }
+  .pit:nth-child(5), .pit:nth-child(6){ border-bottom: 1px solid var(--rule); }
+  .pit .pn{
+    font-family: var(--serif);
+    color: var(--laranja);
+    font-size: 28px;
+    font-style: italic;
+    font-variant-numeric: tabular-nums;
+  }
+  .pit .ph{ font-size: 26px; font-weight: 500; color: var(--fg); letter-spacing:-0.005em; line-height:1.2; }
+  .pit .pf{ font-size: 24px; color: var(--fg-mute); line-height: 1.32; margin-top: 6px; }
+  .pit .pm{ font-size: 24px; color: var(--azul); line-height: 1.32; margin-top: 6px; font-weight: 500; }
+  .pit .pm .lab{ color: var(--fg-mute); font-weight: 400; margin-right: 6px; }
+
+  /* ============================================================
+     AGENT USE-CASES (slide 11)
+  ============================================================ */
+  .uc-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--preto);
+    border: 1px solid var(--preto);
+    margin-top: 12px;
+  }
+  .uc{
+    background: var(--branco);
+    padding: 36px 40px 40px;
+    min-height: 250px;
+    display:flex; flex-direction: column; gap: 14px;
+  }
+  .uc.alt{ background: var(--tint); }
+  .uc .ucn{
+    font-family: var(--mono);
+    font-size: 24px;
+    color: var(--laranja);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .uc h4{ font-size: 30px; font-weight: 500; margin: 0; letter-spacing:-0.005em; }
+  .uc p{ font-size: 24px; color: var(--fg-soft); line-height: 1.36; margin: 0; }
+
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+<!-- ====================================================================
+     01 — CAPA
+==================================================================== -->
+<section class="slide cover" data-label="01 Capa">
+  <div class="crest">
+    <div class="mark">G</div>
+    <div>Fórum de Best Practices · Maio 2026</div>
+  </div>
+
+  <div class="lockup">
+    <div class="kicker">Submódulos Git<span class="pipe">·</span>Repositório Central<span class="pipe">·</span>Agentes de IA</div>
+    <h1>Um repo central para os <em>agentes,</em><br/>submódulos para tudo <em>o resto.</em></h1>
+    <div class="deck-sub">Como usar <span style="font-family:var(--mono); font-style:normal; ">git submodule</span> para dar aos agentes de IA visão unificada do ecossistema — sem migrar para monorepo, sem duplicar código, sem reorganizar nenhum time.</div>
+  </div>
+
+  <div class="meta">
+    <div>Fórum<strong>Best Practices · Eng.</strong></div>
+    <div>Duração<strong>≈ 30 minutos</strong></div>
+    <div>Audiência<strong>Equipe técnica</strong></div>
+    <div>Versão<strong>v3 · Maio 2026</strong></div>
+  </div>
+</section>
+
+<!-- ====================================================================
+     02 — AGENDA
+==================================================================== -->
+<section class="slide" data-label="02 Agenda">
+  <div class="topbar"><div><span class="b">BP</span>Submódulos Git para Agentes de IA</div><div>Agenda</div></div>
+
+  <div class="eyebrow">Conteúdo</div>
+  <h2 class="title">Quatro blocos, do problema <em>à adoção.</em></h2>
+
+  <div class="agenda-list">
+    <div class="agenda-row"><span class="n">01</span><span class="label">O problema <em>multi-repo + IA</em></span><span class="pages">slides 03</span></div>
+    <div class="agenda-row"><span class="n">02</span><span class="label">A solução <em>repo central + submódulos</em></span><span class="pages">slides 04–07</span></div>
+    <div class="agenda-row"><span class="n">03</span><span class="label">Como funciona <em>comandos e fluxos</em></span><span class="pages">slides 08–11</span></div>
+    <div class="agenda-row"><span class="n">04</span><span class="label">Operação <em>armadilhas, métricas, adoção</em></span><span class="pages">slides 12–15</span></div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>02 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     03 — PROBLEMA
+==================================================================== -->
+<section class="slide" data-label="03 Problema">
+  <div class="topbar"><div><span class="b">01</span>Problema</div><div>Multi-repo + IA</div></div>
+
+  <div class="eyebrow">Por que IA sozinha não resolve</div>
+  <h2 class="title">Os agentes precisam ver o ecossistema inteiro.<br/>Os repositórios <em>não conversam entre si.</em></h2>
+
+  <div class="ctx">
+    <div>
+      <p class="lead">Modelos de linguagem trabalham com o contexto que recebem. Quando cada serviço vive em seu próprio repositório, isolado, o agente nunca tem o todo — apenas pedaços.</p>
+      <p class="body" style="margin-top: 32px; max-width: 720px;">A consequência prática: as respostas da IA são tão fragmentadas quanto o ecossistema. Bom o suficiente para um arquivo, frágil cruzando fronteiras de repositório.</p>
+    </div>
+    <div class="stat-stack">
+      <div class="stat-block">
+        <div class="num">N<span class="unit">repos</span></div>
+        <div class="label">Dezenas de repositórios independentes, em linguagens distintas, com cadências próprias — e nenhuma visão unificada.</div>
+      </div>
+      <div class="stat-block">
+        <div class="num">0<span class="unit">contexto</span></div>
+        <div class="label">É o que um agente vê sobre os outros repositórios quando opera apenas dentro de um deles.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>03 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     04 — A IDEIA CENTRAL
+==================================================================== -->
+<section class="slide" data-label="04 Ideia Central">
+  <div class="topbar"><div><span class="b">02</span>Solução</div><div>A ideia central</div></div>
+
+  <div class="eyebrow">Um workspace, todos os repositórios</div>
+  <h2 class="title">Um repositório <em>central para os agentes</em> —<br/>com todos os outros como submódulos.</h2>
+
+  <div class="central">
+    <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#1B3FB0"/>
+        </marker>
+      </defs>
+
+      <!-- Center node -->
+      <rect x="290" y="230" width="320" height="160" fill="#0E0F12"/>
+      <text x="450" y="278" text-anchor="middle" fill="#FFFFFF" font-family="Helvetica Neue, Helvetica, Arial" font-size="28" font-weight="500">agents-workspace</text>
+      <text x="450" y="312" text-anchor="middle" fill="#F26430" font-family="Source Serif 4, serif" font-style="italic" font-size="26">repo central</text>
+      <text x="450" y="346" text-anchor="middle" fill="#A0A2AA" font-family="JetBrains Mono, monospace" font-size="24">agents · prompts</text>
+      <text x="450" y="374" text-anchor="middle" fill="#A0A2AA" font-family="JetBrains Mono, monospace" font-size="24">.gitmodules</text>
+
+      <!-- Satellite repos -->
+      <g font-family="JetBrains Mono, monospace" font-size="26" fill="#0E0F12">
+        <g>
+          <line x1="310" y1="230" x2="200" y2="130" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="40" y="60" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="160" y="110" text-anchor="middle">payments</text>
+        </g>
+        <g>
+          <line x1="450" y1="230" x2="450" y2="170" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="330" y="40" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="450" y="90" text-anchor="middle">identity</text>
+        </g>
+        <g>
+          <line x1="590" y1="230" x2="700" y2="130" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="620" y="60" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="740" y="110" text-anchor="middle">catalog</text>
+        </g>
+
+        <g>
+          <line x1="310" y1="390" x2="200" y2="490" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="40" y="480" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="160" y="530" text-anchor="middle">billing</text>
+        </g>
+        <g>
+          <line x1="450" y1="390" x2="450" y2="450" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="330" y="500" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="450" y="550" text-anchor="middle">webapp</text>
+        </g>
+        <g>
+          <line x1="590" y1="390" x2="700" y2="490" stroke="#1B3FB0" stroke-width="1.6" marker-end="url(#arr-a)"/>
+          <rect x="620" y="480" width="240" height="80" fill="#FFFFFF" stroke="#0E0F12" stroke-width="1.6"/>
+          <text x="740" y="530" text-anchor="middle">notify</text>
+        </g>
+      </g>
+    </svg>
+
+    <div class="right">
+      <p class="lead">O repo central não duplica código — ele <span style="color:var(--azul);">referencia</span> cada repositório por um ponteiro de commit explícito. Os times continuam trabalhando como sempre.</p>
+      <ul>
+        <li><span class="arr">→</span><span>Os <em style="font-style:italic; font-family:var(--serif);">agentes</em> moram no centro, com visão total.</span></li>
+        <li><span class="arr">→</span><span>Os <em style="font-style:italic; font-family:var(--serif);">repositórios de aplicação</em> permanecem isolados.</span></li>
+        <li><span class="arr">→</span><span>Cada análise tem versão exata e reproduzível.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>04 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     05 — O QUE É UM SUBMÓDULO
+==================================================================== -->
+<section class="slide" data-label="05 Submodulo">
+  <div class="topbar"><div><span class="b">02</span>Solução</div><div>O que é um submódulo</div></div>
+
+  <div class="eyebrow">Mecânica básica</div>
+  <h2 class="title">Um submódulo é um <em>ponteiro de commit</em> dentro de outro repositório.</h2>
+
+  <div class="term-wrap">
+<pre class="term"><span class="head"># .gitmodules — arquivo no repo central</span>
+<span class="com">[submodule "repos/payments"]</span>
+    <span class="arg">path</span> = repos/payments
+    <span class="arg">url</span>  = <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="84e3edf0c4e3edf0ecf1e6aae7ebe9">[email&#160;protected]</a>:org/payments.git
+    <span class="arg">branch</span> = main
+
+<span class="com">[submodule "repos/identity"]</span>
+    <span class="arg">path</span> = repos/identity
+    <span class="arg">url</span>  = <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e88f819ca88f819c809d8ac68b8785">[email&#160;protected]</a>:org/identity.git
+    <span class="arg">branch</span> = main</pre>
+
+    <div class="term-side">
+      <h4>O que o Git registra</h4>
+      <div class="row"><span class="n">01</span><span>O arquivo <code>.gitmodules</code> mapeia <em>caminho → url → branch</em> de cada submódulo.</span></div>
+      <div class="row"><span class="n">02</span><span>O repositório central guarda <em>o SHA exato</em> de cada submódulo — não a versão atual.</span></div>
+      <div class="row"><span class="n">03</span><span>Atualizar um submódulo é um commit no repo central. <em>Auditável e reversível.</em></span></div>
+      <div class="row"><span class="n">04</span><span>Nada é copiado: os repositórios <em>permanecem na origem,</em> com seus donos e ciclos.</span></div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>05 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     06 — COMPARAÇÃO
+==================================================================== -->
+<section class="slide" data-label="06 Comparacao">
+  <div class="topbar"><div><span class="b">02</span>Solução</div><div>Por que submódulos</div></div>
+
+  <div class="eyebrow">Submódulo vs alternativas</div>
+  <h2 class="title">Submódulo é o caminho de <em>menor atrito</em> para juntar repositórios existentes.</h2>
+
+  <table class="cmp">
+    <thead>
+      <tr>
+        <th>Critério</th>
+        <th>Monorepo</th>
+        <th>Git Subtree</th>
+        <th>Cópia manual</th>
+        <th class="adopted">Git Submodule <span class="tag">ESCOLHIDO</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="crit">Migração necessária</td>
+        <td><span class="no">Todos os repos.</span></td>
+        <td>Por repo, irreversível.</td>
+        <td>Nenhuma — mas perde-se versão.</td>
+        <td><span class="yn">Nenhuma.</span> Os repos ficam onde estão.</td>
+      </tr>
+      <tr class="highlight">
+        <td class="crit">Versionamento</td>
+        <td>Implícito no branch.</td>
+        <td>Implícito após merge.</td>
+        <td><span class="no">Inexistente.</span></td>
+        <td><span class="yn">Explícito.</span> SHA por submódulo.</td>
+      </tr>
+      <tr>
+        <td class="crit">Isolamento de releases</td>
+        <td>Difícil — tudo se move junto.</td>
+        <td>Parcial.</td>
+        <td><span class="yn">Total.</span></td>
+        <td><span class="yn">Total.</span> Cada repo mantém ciclo próprio.</td>
+      </tr>
+      <tr class="highlight">
+        <td class="crit">Reversibilidade</td>
+        <td><span class="no">Quase nula.</span></td>
+        <td>Difícil.</td>
+        <td>Trivial mas frágil.</td>
+        <td><span class="yn">Trivial.</span> Remover é uma linha.</td>
+      </tr>
+      <tr>
+        <td class="crit">Adoção incremental</td>
+        <td><span class="no">Inviável.</span></td>
+        <td>Por repo, irreversível.</td>
+        <td>Possível.</td>
+        <td><span class="yn">Por repo, reversível.</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>06 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     07 — ANATOMIA DO WORKSPACE
+==================================================================== -->
+<section class="slide" data-label="07 Anatomia">
+  <div class="topbar"><div><span class="b">02</span>Solução</div><div>Anatomia do workspace</div></div>
+
+  <div class="eyebrow">Estrutura do repo central</div>
+  <h2 class="title">Os agentes no centro, <em>os submódulos sob</em> <code style="font-family:var(--mono); background:var(--tint); padding:2px 10px; color:var(--azul);">repos/</code></h2>
+
+  <div class="adr">
+<pre class="adr-card"><span class="meta-line"># agents-workspace/</span>
+<span class="blue">.gitmodules</span>           <span class="meta-line"># mapa dos submódulos</span>
+
+<span class="blue">repos/</span>
+├── payments/        <span class="meta-line"># org/payments</span>
+├── identity/        <span class="meta-line"># org/identity</span>
+├── catalog/         <span class="meta-line"># org/catalog</span>
+├── billing/         <span class="meta-line"># org/billing</span>
+└── webapp/          <span class="meta-line"># org/webapp</span>
+
+<span class="h">agents/</span>              <span class="meta-line"># personas de IA</span>
+<span class="h">prompts/</span>             <span class="meta-line"># prompts versionados</span>
+<span class="h">decisions/</span>           <span class="meta-line"># ADRs versionados</span></pre></pre>
+
+    <div class="adr-side">
+      <h4>Convenções</h4>
+      <div class="row"><span class="n">01</span><span><em>Submódulos sob </em><code style="font-family:var(--mono); ">repos/</code><em> apenas.</em> Nada mais é referenciado externamente.</span></div>
+      <div class="row"><span class="n">02</span><span><em>Cada submódulo aponta para </em><code style="font-family:var(--mono); ">main</code><em></em> por padrão — pinning explícito quando precisamos de estabilidade.</span></div>
+      <div class="row"><span class="n">03</span><span><em>O resto do workspace é nativo</em> — não há submódulos para agentes, prompts ou docs. São arquivos do próprio repo central.</span></div>
+      <div class="row"><span class="n">04</span><span><em>Atualizar um submódulo é um commit.</em> Auditável, revisível, reversível.</span></div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>07 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     08 — ADICIONAR SUBMÓDULO
+==================================================================== -->
+<section class="slide" data-label="08 Adicionar">
+  <div class="topbar"><div><span class="b">03</span>Como funciona</div><div>Adicionar um submódulo</div></div>
+
+  <div class="eyebrow">Fluxo · adicionar</div>
+  <h2 class="title">Adicionar um repositório ao workspace: <em>três comandos.</em></h2>
+
+  <div class="term-wrap">
+<pre class="term"><span class="head"># dentro do repo central</span>
+<span class="prompt">$</span> <span class="cmd">git submodule add</span>
+    <span class="arg">org/payments.git</span>
+    <span class="arg">repos/payments</span>
+<span class="out">Cloning into 'repos/payments'...</span>
+<span class="ok">done.</span>
+
+<span class="prompt">$</span> <span class="cmd">git add</span> <span class="arg">.gitmodules repos/payments</span>
+
+<span class="prompt">$</span> <span class="cmd">git commit -m</span>
+    <span class="arg">"add payments submodule"</span>
+<span class="out">[main 8b3c19a] add payments submodule</span></pre>
+
+    <div class="term-side">
+      <h4>O que acontece</h4>
+      <div class="row"><span class="n">01</span><span><code>submodule add</code> clona o repo dentro de <code>repos/payments</code> e registra a entrada em <code>.gitmodules</code>.</span></div>
+      <div class="row"><span class="n">02</span><span><em>Dois arquivos</em> ficam para commit: o próprio <code>.gitmodules</code> e o <em>gitlink</em> apontando para o SHA atual.</span></div>
+      <div class="row"><span class="n">03</span><span>A partir daqui, o workspace sabe <em>exatamente</em> em qual versão de payments os agentes estão olhando.</span></div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>08 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     09 — CLONAR E ATUALIZAR
+==================================================================== -->
+<section class="slide" data-label="09 Clonar Atualizar">
+  <div class="topbar"><div><span class="b">03</span>Como funciona</div><div>Clonar e atualizar</div></div>
+
+  <div class="eyebrow">Fluxo · clonar e sincronizar</div>
+  <h2 class="title">Clonar trazendo tudo, ou <em>atualizar incrementalmente.</em></h2>
+
+  <div class="term-wrap">
+<pre class="term"><span class="head"># clone com submódulos juntos</span>
+<span class="prompt">$</span> <span class="cmd">git clone</span> <span class="arg">--recurse-submodules</span>
+    <span class="arg">org/agents-workspace.git</span>
+
+<span class="head"># avançar para o HEAD remoto</span>
+<span class="prompt">$</span> <span class="cmd">git submodule update</span>
+    <span class="arg">--remote --merge</span>
+<span class="out">Updated repos/payments  a1b2 → c3d4</span>
+<span class="out">Updated repos/identity  e5f6 → 7a8b</span>
+
+<span class="head"># registrar a nova foto</span>
+<span class="prompt">$</span> <span class="cmd">git commit -am</span> <span class="arg">"sync"</span></pre>
+
+    <div class="term-side">
+      <h4>Notas</h4>
+      <div class="row"><span class="n">01</span><span><code>--recurse-submodules</code> evita o erro mais comum: <em>esquecer os submódulos no clone.</em></span></div>
+      <div class="row"><span class="n">02</span><span><code>--remote --merge</code> traz o HEAD da branch configurada — sem ele, o submódulo fica preso ao SHA antigo.</span></div>
+      <div class="row"><span class="n">03</span><span>A atualização <em>é um commit no workspace</em>. Revisável em PR, igual a qualquer mudança.</span></div>
+      <div class="row"><span class="n">04</span><span>Para um repo específico: <code>git submodule update --remote repos/payments</code></span></div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>09 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     10 — POR QUE AGENTES GANHAM
+==================================================================== -->
+<section class="slide dark" data-label="10 Vantagens">
+  <div class="topbar"><div><span class="b">03</span>Como funciona</div><div>Por que agentes ganham</div></div>
+
+  <div class="eyebrow"><span class="accent">Seis vantagens</span> que só esse padrão oferece</div>
+  <h2 class="title" style="color: var(--branco);">Submódulos + repo central<br/>=<em style="color: var(--laranja); font-family: var(--serif); font-style: italic; font-weight: 400;"> contexto sólido para IA.</em></h2>
+
+  <div class="princ">
+    <div class="pr"><span class="n">01</span><div><h4>Visão unificada.</h4><p>O agente abre um único repo e enxerga todo o ecossistema — sem orquestrar N clones manualmente.</p></div></div>
+    <div class="pr"><span class="n">04</span><div><h4>Versão exata e reproduzível.</h4><p>Cada análise tem um SHA por submódulo. A mesma pergunta sempre olha para o mesmo código.</p></div></div>
+    <div class="pr"><span class="n">02</span><div><h4>Zero migração para os times.</h4><p>Os repositórios continuam onde estão. Donos, PRs e CI permanecem inalterados.</p></div></div>
+    <div class="pr"><span class="n">05</span><div><h4>Prompts e agentes versionados juntos.</h4><p>O comportamento da IA evolui no mesmo Git que o código que ela analisa — auditável em PR.</p></div></div>
+    <div class="pr"><span class="n">03</span><div><h4>Atualização explícita.</h4><p>O workspace só avança quando alguém faz commit. Nada de “a IA respondeu sobre uma versão que não existe mais.”</p></div></div>
+    <div class="pr"><span class="n">06</span><div><h4>Reversível e incremental.</h4><p>Comece com dois submódulos. Cresça quando fizer sentido. Remova com uma linha se não funcionar.</p></div></div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>10 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     11 — O QUE OS AGENTES FAZEM
+==================================================================== -->
+<section class="slide" data-label="11 Casos de Uso">
+  <div class="topbar"><div><span class="b">03</span>Como funciona</div><div>O que os agentes fazem</div></div>
+
+  <div class="eyebrow">Casos de uso reais sobre os submódulos</div>
+  <h2 class="title">Com o ecossistema reunido,<br/>a IA faz <em>o que antes era humanamente caro.</em></h2>
+
+  <div class="uc-grid">
+    <div class="uc">
+      <div class="ucn">@reviewer</div>
+      <h4>Review cross-repo</h4>
+      <p>Avalia um PR em <code style="font-family:var(--mono); ">payments</code> considerando contratos consumidos por <code style="font-family:var(--mono); ">billing</code> e <code style="font-family:var(--mono); ">webapp</code>.</p>
+    </div>
+    <div class="uc alt">
+      <div class="ucn">@discoverer</div>
+      <h4>Descoberta de contexto</h4>
+      <p>“Onde billing depende de eventos emitidos por payments?” — responde com arquivos, linhas e ADRs relevantes.</p>
+    </div>
+    <div class="uc">
+      <div class="ucn">@documenter</div>
+      <h4>Documentação derivada</h4>
+      <p>Mantém docs do ecossistema em sincronia com o código real, atualizando quando submódulos avançam.</p>
+    </div>
+    <div class="uc alt">
+      <div class="ucn">@contract-watcher</div>
+      <h4>Quebra de contrato</h4>
+      <p>Detecta mudanças em APIs e eventos públicos antes do merge, identificando consumidores afetados nos outros submódulos.</p>
+    </div>
+    <div class="uc">
+      <div class="ucn">@onboarder</div>
+      <h4>Onboarding de novos engenheiros</h4>
+      <p>Responde perguntas sobre o ecossistema inteiro com referências precisas — substitui a sessão 1-a-1 inicial.</p>
+    </div>
+    <div class="uc alt">
+      <div class="ucn">@auditor</div>
+      <h4>Auditoria contínua</h4>
+      <p>Compara o workspace contra políticas declaradas e gera evidência rastreável para revisão e compliance.</p>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>11 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     12 — ARMADILHAS
+==================================================================== -->
+<section class="slide" data-label="12 Armadilhas">
+  <div class="topbar"><div><span class="b">04</span>Operação</div><div>Armadilhas comuns</div></div>
+
+  <div class="eyebrow">O que dá errado, e como evitar</div>
+  <h2 class="title">Submódulos têm fama de difíceis.<br/>A dor <em>é convencional, não técnica.</em></h2>
+
+  <div class="pit-grid">
+    <div class="pit">
+      <span class="pn">01</span>
+      <div>
+        <div class="ph">Clonar sem <code style="font-family:var(--mono); ">--recurse-submodules</code></div>
+        <div class="pf">Diretórios vazios sob <code style="font-family:var(--mono); ">repos/</code>. Nada funciona.</div>
+        <div class="pm">→ mitigar: <code style="font-family:var(--mono); ">submodule.recurse=true</code> no clone.</div>
+      </div>
+    </div>
+    <div class="pit">
+      <span class="pn">04</span>
+      <div>
+        <div class="ph">HEAD detached em submódulo</div>
+        <div class="pf">Commits dentro de submódulos sem branch são facilmente perdidos.</div>
+        <div class="pm">→ mitigar: PRs sempre no repo de origem.</div>
+      </div>
+    </div>
+    <div class="pit">
+      <span class="pn">02</span>
+      <div>
+        <div class="ph">Esquecer de commitar o gitlink</div>
+        <div class="pf">Após <code style="font-family:var(--mono); ">submodule update</code>, o ponteiro novo só vale após commit.</div>
+        <div class="pm">→ mitigar: CI falha se houver gitlinks pendentes.</div>
+      </div>
+    </div>
+    <div class="pit">
+      <span class="pn">05</span>
+      <div>
+        <div class="ph">Submódulo em repo privado</div>
+        <div class="pf">URLs SSH em <code style="font-family:var(--mono); ">.gitmodules</code> quebram em CI sem credencial.</div>
+        <div class="pm">→ mitigar: deploy keys dedicadas na CI.</div>
+      </div>
+    </div>
+    <div class="pit">
+      <span class="pn">03</span>
+      <div>
+        <div class="ph">Submódulo desatualizado</div>
+        <div class="pf">Agentes acabam analisando uma foto antiga.</div>
+        <div class="pm">→ mitigar: job semanal de <code style="font-family:var(--mono); ">update --remote</code>.</div>
+      </div>
+    </div>
+    <div class="pit">
+      <span class="pn">06</span>
+      <div>
+        <div class="ph">Crescimento sem critério</div>
+        <div class="pf">Adicionar todo repo da empresa vira ruído.</div>
+        <div class="pm">→ mitigar: apenas repos sob revisão ativa.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>12 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     13 — MÉTRICAS
+==================================================================== -->
+<section class="slide" data-label="13 Metricas">
+  <div class="topbar"><div><span class="b">04</span>Operação</div><div>Métricas</div></div>
+
+  <div class="eyebrow">Como sabemos que está funcionando</div>
+  <h2 class="title">Seis indicadores para saber se o workspace <em>está entregando.</em></h2>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="ktag">Cobertura · 01</div>
+      <div>
+        <div class="kval">100<span class="unit">%</span></div>
+        <div class="klab">Repos da aplicação sob revisão arquitetural ativa, referenciados como submódulos.</div>
+      </div>
+    </div>
+    <div class="kpi alt">
+      <div class="ktag">Cobertura · 02</div>
+      <div>
+        <div class="kval">&lt;7<span class="unit">dias</span></div>
+        <div class="klab">Atraso máximo entre o HEAD remoto e o ponteiro do workspace.</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="ktag">Eficiência · 03</div>
+      <div>
+        <div class="kval">−40<span class="unit">%</span></div>
+        <div class="klab">Tempo em descoberta de contexto por engenheiro, por semana.</div>
+      </div>
+    </div>
+    <div class="kpi alt">
+      <div class="ktag">Eficiência · 04</div>
+      <div>
+        <div class="kval">3<span class="unit">sem.</span></div>
+        <div class="klab">Onboarding técnico até produtividade em sistemas cross-repo.</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="ktag">Qualidade · 05</div>
+      <div>
+        <div class="kval">−60<span class="unit">%</span></div>
+        <div class="klab">Quebras de contrato em produção, vs. linha de base, com <code style="font-family:var(--mono); ">@contract-watcher</code> ativo.</div>
+      </div>
+    </div>
+    <div class="kpi alt">
+      <div class="ktag">Qualidade · 06</div>
+      <div>
+        <div class="kval">100<span class="unit">%</span></div>
+        <div class="klab">Análises de agentes reprodutíveis — mesmo SHA por submódulo retorna mesma resposta.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>13 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     14 — ADOÇÃO
+==================================================================== -->
+<section class="slide" data-label="14 Adocao">
+  <div class="topbar"><div><span class="b">04</span>Operação</div><div>Adoção incremental</div></div>
+
+  <div class="eyebrow">Quatro fases</div>
+  <h2 class="title">Dois submódulos hoje. <em>Todo o ecossistema</em> em um ano.</h2>
+
+  <div class="road">
+    <div class="phase">
+      <div class="dot"></div>
+      <div class="ph-name">Fase 01 · Fundação</div>
+      <h4>Repo central + 2 submódulos.</h4>
+      <p>Cria o workspace, adiciona dois serviços piloto, configura CI para sincronia semanal.</p>
+      <ul>
+        <li>+ 2 submódulos piloto</li>
+        <li>@reviewer + @documenter</li>
+        <li>CI de sincronia ativo</li>
+      </ul>
+      <div class="dur">Q3 · 8 semanas</div>
+    </div>
+    <div class="phase">
+      <div class="dot"></div>
+      <div class="ph-name">Fase 02 · Expansão</div>
+      <h4>Caminho de receita coberto.</h4>
+      <p>Todos os serviços do fluxo de receita entram como submódulos. Mais agentes ativos.</p>
+      <ul>
+        <li>+ 6 submódulos</li>
+        <li>+ @contract-watcher</li>
+        <li>Reviews cross-repo</li>
+      </ul>
+      <div class="dur">Q4 · 12 semanas</div>
+    </div>
+    <div class="phase">
+      <div class="dot"></div>
+      <div class="ph-name">Fase 03 · Generalização</div>
+      <h4>Cobertura total + onboarding.</h4>
+      <p>Todos os repos produtivos referenciados; experiência de novo engenheiro reformulada.</p>
+      <ul>
+        <li>+ N submódulos restantes</li>
+        <li>+ @discoverer + @onboarder</li>
+        <li>Self-service para times</li>
+      </ul>
+      <div class="dur">Q1 · 16 semanas</div>
+    </div>
+    <div class="phase">
+      <div class="dot"></div>
+      <div class="ph-name">Fase 04 · Operação</div>
+      <h4>Workspace como plataforma.</h4>
+      <p>Time dedicado, SLO publicado, ciclos contínuos de melhoria de agentes e prompts.</p>
+      <ul>
+        <li>Squad de plataforma</li>
+        <li>SLO 99% para queries</li>
+        <li>Revisão trimestral</li>
+      </ul>
+      <div class="dur">Contínuo</div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>14 / 15</span></div>
+</section>
+
+<!-- ====================================================================
+     15 — ENCERRAMENTO (DARK)
+==================================================================== -->
+<section class="slide dark close" data-label="15 Encerramento">
+  <div class="topbar"><div><span class="b">04</span>Operação</div><div>Encerramento</div></div>
+
+  <div class="big">
+    <div class="pre">Discussão</div>
+    <h2>O repositório central<br/>é onde a <em>IA encontra o todo.</em></h2>
+    <div class="ask">Quais dois submódulos começamos? Quem cuida do CI de sincronia? Qual agente é o primeiro — reviewer, descobridor, documenter? — vamos abrir.</div>
+
+    <div class="stripe">
+      <div>Próximo passo<strong>Criar o repo central</strong></div>
+      <div>Submódulos piloto<strong>2 serviços · 8 semanas</strong></div>
+      <div>Quando<strong>Próximo ciclo</strong></div>
+    </div>
+  </div>
+
+  <div class="footbar"><span>Best Practices · 2026</span><span>15 / 15 · fim</span></div>
+</section>
+
+</deck-stage>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
